@@ -37,7 +37,7 @@ You can define a new class that extends GenericStruct and define the fields usin
 primitives.py.
 
 ```python
-from cstructpy.data_models import GenericStruct
+from cstructpy import GenericStruct
 from cstructpy.primitives import INT8, U_INT16, FLOAT
 
 
@@ -83,7 +83,7 @@ The package provides the following primitive types for defining fields:
 ## Example: Packing and Unpacking
 
 ```python
-from cstructpy.data_models import GenericStruct
+from cstructpy import GenericStruct
 from cstructpy.primitives import INT16, CHAR_ARRAY
 
 
