@@ -19,7 +19,7 @@ class PrimitiveType(ABC):
     def __init__(self, format_char: str,
                  min_value: Optional[int] = None,
                  max_value: Optional[int] = None,
-                 size: Optional[int] = None
+                 size: int = 0
                  ) -> None:
         """
         Initializes a PrimitiveType with the given format character, optional min/max values, and size.
