@@ -1,3 +1,9 @@
+[project]
+name = "cstructpy"
+version = "0.1.0"
+description = "cstructpy is a Python package designed for binary serialization and deserialization of structured data using custom primitive types."
+authors = ["Maxim Mushizky maximmu87@gmail.com"]
+
 [build-system]
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"

@@ -1,4 +1,4 @@
-# cstructpy
+# cstructpy v0.1.0
 
 [![Build Status](https://github.com/Maxim-Mushizky/cstructpy/actions/workflows/ci.yml/badge.svg)](https://github.com/Maxim-Mushizky/cstructpy/actions)
 [![PyPI version](https://badge.fury.io/py/cstructpy.svg)](https://badge.fury.io/py/cstructpy)
