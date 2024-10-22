@@ -1,4 +1,4 @@
-name: Test the code for linting, types and tests
+name: Test code
 
 on:
   push:
