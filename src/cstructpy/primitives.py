@@ -68,7 +68,7 @@ class INT8(PrimitiveType):
         super().__init__('b', min_value=-128, max_value=127, size=1)
 
 
-class U_INT8(PrimitiveType):
+class UINT8(PrimitiveType):
     def __init__(self):
         super().__init__('B', min_value=0, max_value=255, size=1)
 
@@ -78,7 +78,7 @@ class INT16(PrimitiveType):
         super().__init__('h', min_value=-32768, max_value=32767, size=2)
 
 
-class U_INT16(PrimitiveType):
+class UINT16(PrimitiveType):
     def __init__(self):
         super().__init__('H', min_value=0, max_value=65535, size=2)
 
@@ -88,7 +88,7 @@ class INT32(PrimitiveType):
         super().__init__('i', min_value=-2147483648, max_value=2147483647, size=4)
 
 
-class U_INT32(PrimitiveType):
+class UINT32(PrimitiveType):
     def __init__(self):
         super().__init__('I', min_value=0, max_value=4294967295, size=4)
 
@@ -98,7 +98,7 @@ class INT64(PrimitiveType):
         super().__init__('q', min_value=-9223372036854775808, max_value=9223372036854775807, size=8)
 
 
-class U_INT64(PrimitiveType):
+class UINT64(PrimitiveType):
     def __init__(self):
         super().__init__('Q', min_value=0, max_value=18446744073709551615, size=8)
 
@@ -144,7 +144,7 @@ class CHAR(PrimitiveType):
         return super().unpack(data).decode('ascii')
 
 
-class CHAR_ARRAY(PrimitiveType):
+class CharArray(PrimitiveType):
     def __init__(self, length: int):
         super().__init__(f'{length}s', size=length)
         self.length = length

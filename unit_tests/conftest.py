@@ -1,7 +1,7 @@
 import pytest
 from src.cstructpy.primitives import (
-    BOOL, CHAR, CHAR_ARRAY, PADDING,
-    INT8, U_INT8, INT16, U_INT16, INT32, U_INT32, INT64, U_INT64,
+    BOOL, CHAR, CharArray, PADDING,
+    INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64,
     FLOAT, DOUBLE
 )
 from src.cstructpy import GenericStruct
@@ -27,7 +27,7 @@ def char_struct():
 @pytest.fixture
 def string_struct():
     class StringStruct(GenericStruct):
-        value: CHAR_ARRAY(5)
+        value: CharArray(5)
 
     return StringStruct
 
@@ -47,6 +47,6 @@ def mixed_struct():
         char_val: CHAR
         int16_val: INT16
         float_val: FLOAT
-        string_val: CHAR_ARRAY(10)
+        string_val: CharArray(10)
 
     return MixedStruct

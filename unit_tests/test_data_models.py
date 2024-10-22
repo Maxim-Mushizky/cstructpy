@@ -1,7 +1,7 @@
 import pytest
 from src.cstructpy.primitives import (
-    BOOL, CHAR, CHAR_ARRAY, PADDING,
-    INT8, U_INT8, INT16, U_INT16, INT32, U_INT32, INT64, U_INT64,
+    BOOL, CHAR, CharArray, PADDING,
+    INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64,
     FLOAT, DOUBLE
 )
 from src.cstructpy import GenericStruct
@@ -104,13 +104,13 @@ class TestCharArrayType:
 # Parametrized tests for numeric types
 @pytest.mark.parametrize("type_class,min_val,max_val,size", [
     (INT8, -128, 127, 1),
-    (U_INT8, 0, 255, 1),
+    (UINT8, 0, 255, 1),
     (INT16, -32768, 32767, 2),
-    (U_INT16, 0, 65535, 2),
+    (UINT16, 0, 65535, 2),
     (INT32, -2147483648, 2147483647, 4),
-    (U_INT32, 0, 4294967295, 4),
+    (UINT32, 0, 4294967295, 4),
     (INT64, -9223372036854775808, 9223372036854775807, 8),
-    (U_INT64, 0, 18446744073709551615, 8)
+    (UINT64, 0, 18446744073709551615, 8)
 ])
 class TestIntegerTypes:
     def test_valid_range(self, type_class, min_val, max_val, size):
