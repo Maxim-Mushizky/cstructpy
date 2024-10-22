@@ -3,7 +3,25 @@ from .primitives import PrimitiveType
 
 
 class GenericStruct:
+    """
+    A base class for structured data that provides methods to pack and unpack binary data
+    and to dynamically create fields based on type hints.
+
+    Attributes:
+        _type_hints (dict): Type hints for the class attributes, used for field validation and packing.
+    """
+
     def __init__(self, **kwargs):
+        """
+        Initializes the GenericStruct instance and sets default types for all fields based on type hints.
+        Accepts keyword arguments for field values.
+
+        Args:
+            **kwargs: Keyword arguments corresponding to the fields and their values.
+
+        Raises:
+            ValueError: If a field name does not exist in the class type hints.
+        """
         self._type_hints = get_type_hints(self.__class__)
 
         for field_name, field_type in self._type_hints.items():
@@ -31,6 +49,12 @@ class GenericStruct:
         super().__setattr__(name, value)
 
     def pack(self) -> bytes:
+        """
+        Packs the structure's fields into a binary representation using the defined types.
+
+        Returns:
+            bytes: The packed binary data for the structure.
+       """
         result = b''
         for field_name in self._type_hints:
             value = getattr(self, field_name)
@@ -40,6 +64,15 @@ class GenericStruct:
 
     @classmethod
     def unpack(cls, data: bytes):
+        """
+        Unpacks binary data into a structure instance by reading field values according to their types.
+
+        Args:
+            data (bytes): The binary data to unpack.
+
+        Returns:
+            GenericStruct: An instance of the class with field values set from the binary data.
+        """
         offset = 0
         kwargs = {}
 
@@ -55,6 +88,12 @@ class GenericStruct:
         return cls(**kwargs)
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        Converts the structure to a dictionary with field names as keys and their values.
+
+        Returns:
+            dict: A dictionary representation of the structure.
+        """
         return {
             field_name: getattr(self, field_name)
             for field_name in self._type_hints

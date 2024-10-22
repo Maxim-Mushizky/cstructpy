@@ -1,16 +1,53 @@
 import struct
 from typing import Any
+from abc import ABC
 
 
 # Base primitive type class (same as before)
-class PrimitiveType:
-    def __init__(self, format_char: str, min_value: int = None, max_value: int = None, size: int = None):
+class PrimitiveType(ABC):
+    """
+    Abstract base class for primitive types that defines methods for validation, packing,
+    and unpacking binary data.
+
+    Attributes:
+        format_char (str): The format character used by the `struct` module for packing/unpacking.
+        min_value (int, optional): The minimum allowable value for the type.
+        max_value (int, optional): The maximum allowable value for the type.
+        size (int): The size of the type in bytes.
+    """
+
+    def __init__(self, format_char: str,
+                 min_value: int = None,
+                 max_value: int = None,
+                 size: int = None
+                 ) -> None:
+        """
+        Initializes a PrimitiveType with the given format character, optional min/max values, and size.
+
+        Args:
+            format_char (str): Format character for the type (e.g., 'i', 'f').
+            min_value (int, optional): Minimum value allowed (for integer types).
+            max_value (int, optional): Maximum value allowed (for integer types).
+            size (int, optional): Size of the type in bytes.
+        """
         self.format_char = format_char
         self.min_value = min_value
         self.max_value = max_value
         self.size = size
 
     def validate(self, value: Any) -> bool:
+        """
+        Validates the given value against the type's constraints (min/max).
+
+        Args:
+            value (Any): The value to validate.
+
+        Raises:
+            ValueError: If the value does not meet the type's constraints.
+
+        Returns:
+            bool: True if the value is valid.
+        """
         if self.min_value is not None and value < self.min_value:
             raise ValueError(f"Value {value} is less than minimum {self.min_value}")
         if self.max_value is not None and value > self.max_value:
