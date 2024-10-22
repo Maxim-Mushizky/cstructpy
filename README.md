@@ -1,4 +1,4 @@
-# cstructpy
+# cstructpy v0.1.0
 
 ![Testing workflow](https://github.com/Maxim-Mushizky/cstructpy/actions/workflows/test-code.yml/badge.svg)
 ![PyPI version](https://badge.fury.io/py/cstructpy.svg)
