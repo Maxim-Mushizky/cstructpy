@@ -1,6 +1,7 @@
 from typing import get_type_hints, Any, Dict
 from .primitives import PrimitiveType
 
+
 class GenericStruct:
     def __init__(self, **kwargs):
         self._type_hints = get_type_hints(self.__class__)

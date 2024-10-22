@@ -33,6 +33,14 @@ def string_struct():
 
 
 @pytest.fixture
+def int16_struct():
+    class Int16Struct(GenericStruct):
+        value: INT16
+
+    return Int16Struct
+
+
+@pytest.fixture
 def mixed_struct():
     class MixedStruct(GenericStruct):
         bool_val: BOOL

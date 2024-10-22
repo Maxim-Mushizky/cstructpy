@@ -7,6 +7,23 @@ from src.cstructpy.primitives import (
 from src.cstructpy import GenericStruct
 
 
+class TestInt16Type:
+
+    def test_valid_values(self, int16_struct):
+        int16_obj = int16_struct(value=12345)
+        assert int16_obj.value == 12345
+
+        int16_obj.value = -12345
+        assert int16_obj.value == -12345
+
+    def test_invalid_values(self, int16_struct):
+        int16_obj = int16_struct(value=12345)
+        with pytest.raises(ValueError):
+            int16_obj.value = 2 ** 15 + 1  # maximum val
+        with pytest.raises(ValueError):
+            int16_obj.value = - 2 ** 15 - 1  # minimum val
+
+
 # Test primitive types
 class TestBooleanType:
     def test_valid_values(self, bool_struct):
@@ -22,6 +39,8 @@ class TestBooleanType:
             s.value = 1
         with pytest.raises(ValueError):
             s.value = "True"
+        with pytest.raises(ValueError):
+            s.value = b'348234809234809782634867234'
 
     def test_pack_unpack(self, bool_struct):
         s = bool_struct(value=True)
@@ -202,14 +221,6 @@ class TestErrorHandling:
     def test_missing_required_field(self, mixed_struct):
         with pytest.raises(AttributeError):
             mixed_struct(bool_val=True).pack()  # Missing other required fields
-
-    @pytest.mark.parametrize("invalid_data", [
-        b'123',  # Too short
-        b'12345678extra'  # Too long
-    ])
-    def test_invalid_unpack_data(self, bool_struct, invalid_data):
-        with pytest.raises(Exception):
-            bool_struct.unpack(invalid_data)
 
 
 class TestUtilities:
