@@ -1,8 +1,8 @@
-name: Python package
+name: Deploy cstructpy to PyPi
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
   pull_request:
     branches: [ "main" ]
 
@@ -18,7 +18,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.11'
 
     # Step 3: Install dependencies
     - name: Install dependencies
