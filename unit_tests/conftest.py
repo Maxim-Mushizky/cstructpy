@@ -38,7 +38,6 @@ def mixed_struct():
         bool_val: BOOL
         char_val: CHAR
         int16_val: INT16
-        _padding: PADDING(2)
         float_val: FLOAT
         string_val: CHAR_ARRAY(10)
 

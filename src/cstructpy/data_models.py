@@ -1,8 +1,5 @@
 from typing import get_type_hints, Any, Dict
-
-from src.cstructpy.primitives import PrimitiveType, BOOL, CHAR, CHAR_ARRAY, INT8, U_INT8, INT16, U_INT16, INT32, \
-    U_INT32, INT64, U_INT64, FLOAT, DOUBLE
-
+from .primitives import PrimitiveType
 
 class GenericStruct:
     def __init__(self, **kwargs):
@@ -61,49 +58,3 @@ class GenericStruct:
             field_name: getattr(self, field_name)
             for field_name in self._type_hints
         }
-
-
-def example_usage():
-    class CompleteExample(GenericStruct):
-        bool_val: BOOL
-        char_val: CHAR
-        string_val: CHAR_ARRAY(10)
-        int8_val: INT8
-        uint8_val: U_INT8
-        int16_val: INT16
-        uint16_val: U_INT16
-        int32_val: INT32
-        uint32_val: U_INT32
-        int64_val: INT64
-        uint64_val: U_INT64
-        float_val: FLOAT
-        double_val: DOUBLE
-
-    # Create instance
-    example = CompleteExample(
-        bool_val=True,
-        char_val='A',
-        string_val="Hello",
-        int8_val=-100,
-        uint8_val=200,
-        int16_val=-30000,
-        uint16_val=60000,
-        int32_val=-2000000000,
-        uint32_val=4000000000,
-        int64_val=-9000000000000000000,
-        uint64_val=18000000000000000000,
-        float_val=3.14,
-        double_val=3.14159265359
-    )
-
-    # Pack to bytes
-    packed = example.pack()
-    print(packed)
-    print(f"Packed size: {len(packed)} bytes")
-
-    # Unpack from bytes
-    unpacked = CompleteExample.unpack(packed)
-    print(f"Unpacked values: {unpacked.to_dict()}")
-
-if __name__ == '__main__':
-    example_usage()
