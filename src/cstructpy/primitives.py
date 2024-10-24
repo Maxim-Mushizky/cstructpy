@@ -1,5 +1,5 @@
 import struct
-from typing import Any, Optional, Sequence
+from typing import Any, Optional, Sequence, Self
 from abc import ABC
 
 from .exceptions import ArraySizeError, CharArrayError
@@ -18,7 +18,7 @@ class PrimitiveType(ABC):
         _size (int): The size of the type in bytes.
     """
 
-    def __init__(self, format_char: str,
+    def __init__(self, format_char: str = '',
                  min_value: Optional[int] = None,
                  max_value: Optional[int] = None,
                  size: int = 0
@@ -53,7 +53,7 @@ class PrimitiveType(ABC):
     def size(self):
         return self._size
 
-    def __class_getitem__(cls, array_size: int) -> 'PrimitiveType':
+    def __class_getitem__(cls, array_size: int) -> Self:
         """
         Intercepts the [] operator, returning a new class that represents an array of this type.
 
