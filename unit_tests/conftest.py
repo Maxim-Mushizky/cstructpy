@@ -50,3 +50,17 @@ def mixed_struct():
         string_val: CharArray(10)
 
     return MixedStruct
+
+
+@pytest.fixture
+def complex_struct():
+    class MixedStruct(GenericStruct):
+        bool_val: BOOL
+        char_val: CHAR
+        int16_val: INT16
+        float_val: FLOAT
+        uint16_val: UINT16
+        uint32_val: UINT32
+        uint64_val: UINT64
+
+    return MixedStruct

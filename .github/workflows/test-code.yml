@@ -2,7 +2,10 @@ name: Test code
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches:
+      - main
+      - 'dev[-_]*'
+      - 'feature[-_]*'
   pull_request:
     branches: [ "main" ]
 

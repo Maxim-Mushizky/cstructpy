@@ -1,6 +1,8 @@
+import random
+
 import pytest
 from src.cstructpy.primitives import (
-    BOOL, CHAR, CharArray, PADDING,
+    BOOL, CHAR, CharArray,
     INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64,
     FLOAT, DOUBLE
 )
@@ -250,3 +252,65 @@ class TestUtilities:
         s = PaddedStruct(value=1, next_value=2)
         d = s.to_dict()
         assert d == {'value': 1, 'next_value': 2}
+
+    @pytest.mark.parametrize('value', [random.randint(int(-2 ** 15 + 1), int(2 ** 15 - 1)) for _ in range(10)])
+    def test_equality_between_generic_structs(self, value, int16_struct):
+        class LocalInt16Struct(GenericStruct):
+            value: INT16
+
+        int16_obj = int16_struct(value=value)
+        local_int16_obj = LocalInt16Struct(value=value)
+        assert int16_obj == local_int16_obj, "The objects should be equal"
+        assert local_int16_obj == int16_obj, "The objects should be equal"
+
+    def test_equality_for_complex_generic_struct(self, complex_struct):
+        class LocalComplexStruct(GenericStruct):
+            bool_val: BOOL
+            char_val: CHAR
+            int16_val: INT16
+            float_val: FLOAT
+            uint16_val: UINT16
+            uint32_val: UINT32
+            uint64_val: UINT64
+
+        complex_obj = complex_struct(
+            bool_val=True,
+            char_val='X',
+            int16_val=-1234,
+            float_val=3.14,
+            uint16_val=int(2 ** 16 - 1),
+            uint32_val=int(2 ** 32 - 1),
+            uint64_val=int(2 ** 64 - 1)
+        )
+
+        local_complex_struct = LocalComplexStruct(
+            bool_val=True,
+            char_val='X',
+            int16_val=-1234,
+            float_val=3.14,
+            uint16_val=int(2 ** 16 - 1),
+            uint32_val=int(2 ** 32 - 1),
+            uint64_val=int(2 ** 64 - 1)
+        )
+
+        assert local_complex_struct == complex_obj, "The objects should be equal"
+        assert complex_obj == local_complex_struct, "The objects should be equal"
+
+    def test_inequality_between_char_array_generic_structs(self, string_struct):
+        # Arrays in different memory locations, thus they shouldn't be equal
+        class LocalStringStruct(GenericStruct):
+            value: CharArray(5)
+
+        string_obj = string_struct(value='yes')
+        local_string_obj = LocalStringStruct(value='yes')
+
+        assert string_obj != local_string_obj, "This objects should be different "
+        assert local_string_obj != string_obj, "This objects should be different "
+
+    def test_inequality_between_generic_structs(self, int16_struct):
+        class LocalInt16Struct(GenericStruct):
+            value: INT16
+
+        int16_obj = int16_struct(value=12)
+        local_int16_obj = LocalInt16Struct(value=12345)
+        assert int16_obj != local_int16_obj, "The objects should not be equal"

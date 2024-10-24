@@ -99,48 +99,22 @@ class GenericStruct:
             for field_name in self._type_hints
         }
 
+    def __eq__(self, other: 'GenericStruct') -> bool:
+        if isinstance(other, GenericStruct):
+            # Get dictionaries of attributes for both instances
+            self_attrs = {k: v for k, v in self.__dict__.items() if not k.startswith('__')}
+            other_attrs = {k: v for k, v in other.__dict__.items() if not k.startswith('__')}
 
-def example_usage():
-    class CompleteExample(GenericStruct):
-        bool_val: BOOL
-        char_val: CHAR
-        string_val: CHAR_ARRAY(10)
-        int8_val: INT8
-        uint8_val: U_INT8
-        int16_val: INT16
-        uint16_val: U_INT16
-        int32_val: INT32
-        uint32_val: U_INT32
-        int64_val: INT64
-        uint64_val: U_INT64
-        float_val: FLOAT
-        double_val: DOUBLE
+            # for self
+            for k, v in self_attrs.items():
+                if '_type' in k and k != '_type_hints':  # Update only to the class and ignore type_hints
+                    self_attrs[k] = v.__class__
 
-    # Create instance
-    example = CompleteExample(
-        bool_val=True,
-        char_val='A',
-        string_val="Hello",
-        int8_val=-100,
-        uint8_val=200,
-        int16_val=-30000,
-        uint16_val=60000,
-        int32_val=-2000000000,
-        uint32_val=4000000000,
-        int64_val=-9000000000000000000,
-        uint64_val=18000000000000000000,
-        float_val=3.14,
-        double_val=3.14159265359
-    )
+            # for other
+            for k, v in other_attrs.items():
+                if '_type' in k and k != '_type_hints':  # Update only to the class and ignore type_hints
+                    other_attrs[k] = v.__class__
 
-    # Pack to bytes
-    packed = example.pack()
-    print(packed)
-    print(f"Packed size: {len(packed)} bytes")
-
-    # Unpack from bytes
-    unpacked = CompleteExample.unpack(packed)
-    print(f"Unpacked values: {unpacked.to_dict()}")
-
-if __name__ == '__main__':
-    example_usage()
+            # Compare user-defined attributes
+            return self_attrs == other_attrs
+        return False
