@@ -99,7 +99,7 @@ class GenericStruct:
             for field_name in self._type_hints
         }
 
-    def __eq__(self, other: 'GenericStruct') -> bool:
+    def __eq__(self, other) -> bool:
         if isinstance(other, GenericStruct):
             # Get dictionaries of attributes for both instances
             self_attrs = {k: v for k, v in self.__dict__.items() if not k.startswith('__')}
