@@ -80,7 +80,7 @@ class GenericStruct:
 
         for field_name in temp_instance._type_hints:
             type_instance = getattr(temp_instance, f'_{field_name}_type')
-            field_size = type_instance.size
+            field_size = type_instance._size
             field_data = data[offset:offset + field_size]
             kwargs[field_name] = type_instance.unpack(field_data)
             offset += field_size

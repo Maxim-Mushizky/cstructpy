@@ -7,6 +7,7 @@ from src.cstructpy.primitives import (
     FLOAT, DOUBLE
 )
 from src.cstructpy import GenericStruct
+from src.cstructpy import exceptions
 
 
 class TestInt16Type:
@@ -223,6 +224,51 @@ class TestErrorHandling:
     def test_missing_required_field(self, mixed_struct):
         with pytest.raises(AttributeError):
             mixed_struct(bool_val=True).pack()  # Missing other required fields
+
+
+class TestArrayCreation:
+
+    def test_array_creation_for_primitives(self, arrays_struct_6):
+        arrays_struct_obj = arrays_struct_6(
+            bool_array_6=[True, False, False, True, False, False],
+            int16_array_6=[1234, 23341, 12, 1451, 234, 11],
+            float_array_6=[3.141592, 123.141592, -1233.141592, 13.141391, -1001.141592, 10000.141592],
+            uint16_array_6=[1234, 43341, 12, 1451, 234, 11],
+            uint32_array_6=[1234, 23341, 12, 1451, 234, 11],
+            uint64_array_6=[1234, 23341, 12, 23123123, 234, 1844674407370955]
+        )
+
+        packed = arrays_struct_obj.pack()
+        assert len(packed) == (1 + 2 + 4 + 2 + 4 + 8) * 6, "Checksum failed"
+
+        arrays_struct_6_unpacked = arrays_struct_6.unpack(packed)
+
+        assert list(arrays_struct_6_unpacked.bool_array_6) == arrays_struct_obj.bool_array_6
+        assert list(arrays_struct_6_unpacked.int16_array_6) == arrays_struct_obj.int16_array_6
+        assert list(arrays_struct_6_unpacked.uint16_array_6) == arrays_struct_obj.uint16_array_6
+        assert list(arrays_struct_6_unpacked.uint32_array_6) == arrays_struct_obj.uint32_array_6
+        assert list(arrays_struct_6_unpacked.uint64_array_6) == arrays_struct_obj.uint64_array_6
+
+        # Check for float precision
+        for u_val, val in zip(arrays_struct_6_unpacked.float_array_6, arrays_struct_obj.float_array_6):
+            assert val == pytest.approx(u_val, rel=10 ** -6)
+
+    def test_char_not_used_as_array(self):
+        with pytest.raises(exceptions.CharArrayError):
+            class BrokenCharArray(GenericStruct):
+                char_array: CHAR[6]
+
+    def test_array_length_fixed(self):
+        class FixedArrayInt(GenericStruct):
+            values: INT16[4]
+
+        with pytest.raises(exceptions.ArraySizeError):
+            FixedArrayInt(values=[1, 2, 3])
+        with pytest.raises(exceptions.ArraySizeError):
+            FixedArrayInt(values=[1, 2, 3, 3, 1])
+
+        array_obj = FixedArrayInt(values=[1, 2, 3, 3])
+        assert len(array_obj.values) == 4, "Array size isn't length expected of 4"
 
 
 class TestUtilities:

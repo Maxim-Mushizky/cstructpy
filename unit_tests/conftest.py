@@ -64,3 +64,15 @@ def complex_struct():
         uint64_val: UINT64
 
     return MixedStruct
+
+
+@pytest.fixture
+def arrays_struct_6():
+    class ArraysStruct6(GenericStruct):
+        bool_array_6: BOOL[6]
+        int16_array_6: INT16[6]
+        float_array_6: FLOAT[6]
+        uint16_array_6: UINT16[6]
+        uint32_array_6: UINT32[6]
+        uint64_array_6: UINT64[6]
+    return ArraysStruct6
