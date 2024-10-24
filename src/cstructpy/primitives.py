@@ -75,29 +75,6 @@ class PrimitiveType(ABC):
 
         return _cls_instance
 
-    def __call__(self, array_size: Optional[int] = None) -> str:
-        """
-        If called with a count, returns the format string for an array of that many elements.
-        If called without a count, returns the format string for a single element.
-
-        Args:
-            array_size (int, optional): The number of elements in the array.
-
-        Returns:
-            str: The format string for struct packing.
-        """
-        if array_size == 0:
-            raise ArraySizeError('error: size of array is zero')
-
-        if array_size < 0:
-            raise ArraySizeError('error: size of array is negative')
-
-        if array_size is not None:
-            self._format_char = f'{array_size}{self._format_char}'
-            self._size *= array_size
-            return f'{array_size}{self._format_char}'  # Generate array format (e.g., '6b' for 6 int8)
-        return self._format_char  # Single value format (e.g., 'b' for int8)
-
     def validate(self, value: Any) -> bool:
         """
         Validates the given value against the type's constraints (min/max).
