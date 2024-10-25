@@ -1,10 +1,11 @@
-# cstructpy v0.1.0
+# cstructpy
 
-[![Test code](https://github.com/Maxim-Mushizky/cstructpy/actions/workflows/test-code.yml/badge.svg)](https://github.com/Maxim-Mushizky/cstructpy/actions)
+![Testing workflow](https://github.com/Maxim-Mushizky/cstructpy/actions/workflows/test-code.yml/badge.svg)
 [![PyPI version](https://badge.fury.io/py/cstructpy.svg)](https://badge.fury.io/py/cstructpy)
 [![Python versions](https://img.shields.io/pypi/pyversions/cstructpy)](https://pypi.org/project/cstructpy/)
 
-**cstructpy** is a Python package designed for binary serialization and deserialization of structured data using custom
+**cstructpy** is a light-weight Python package designed for binary serialization and deserialization of structured data
+using c like
 primitive types. It provides a simple interface for packing and unpacking binary data based on field definitions using
 Python's `struct` module.
 The motivation for this package is to have a data validation using type annotations, similar to pydantic but for binary
@@ -15,8 +16,10 @@ similar class structure and object creation
 
 - Custom primitive types for integers, floating points, characters, and arrays.
 - Dynamically create structured classes with flexible field definitions.
+- Provides an interface for primitive type annotations
+- Supports validation for all the primitive types
+- Supports Array creation for all primitive types (apart for CHAR type) and validation of size
 - Serialize/deserialize data to/from binary formats easily.
-- Supports both signed and unsigned integer types (e.g., `INT8`, `U_INT8`, `INT16`, etc.).
 - Support for alignment padding and fixed-length character arrays.
 
 ## Installation
@@ -38,25 +41,28 @@ primitives.py.
 
 ```python
 from cstructpy import GenericStruct
-from cstructpy.primitives import INT8, U_INT16, FLOAT
+from cstructpy.primitives import INT8, UINT16, FLOAT, UINT64
 
 
 class MyDataStructure(GenericStruct):
     field1: INT8
-    field2: U_INT16
+    field2: UINT16
     field3: FLOAT
+    array_uint64: UINT64[3]  # an array of UINT64 of size 3 
 
 
 # Create an instance with field values
-data_instance = MyDataStructure(field1=-128, field2=65535, field3=3.14)
+data_instance = MyDataStructure(field1=-128, field2=65535, field3=3.14, array_uint64=[312, 2345, 234212])
 
 # Pack the instance into binary format
 binary_data = data_instance.pack()
-print(binary_data)  # Output: b'\x80\xff\xff\xc3\xf5H@'
+print(binary_data)
+# Output: b'\x80\xff\xff\xc3\xf5H@8\x01\x00\x00\x00\x00\x00\x00)\t\x00\x00\x00\x00\x00\x00\xe4\x92\x03\x00\x00\x00\x00\x00'
 
 # Unpack the binary data back into a structured instance
 new_instance = MyDataStructure.unpack(binary_data)
-print(new_instance.to_dict())  # Output: {'field1': -128, 'field2': 65535, 'field3': 3.14}
+print(new_instance.to_dict())
+# Output: {'field1': -128, 'field2': 65535, 'field3': 3.140000104904175, 'array_uint64': (312, 2345, 234212)}
 
 
 ```
@@ -79,6 +85,8 @@ The package provides the following primitive types for defining fields:
 * **CHAR_ARRAY**: Fixed-length character array.
 * **BOOL**: Boolean value.
 * **PADDING**: Padding type used for alignment.
+
+All types, apart from CHAR and PADDING can be invoked as an array with square brackets
 
 ## Example: Packing and Unpacking
 

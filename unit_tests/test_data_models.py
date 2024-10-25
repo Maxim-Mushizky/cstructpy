@@ -1,10 +1,13 @@
+import random
+
 import pytest
 from src.cstructpy.primitives import (
-    BOOL, CHAR, CharArray, PADDING,
+    BOOL, CHAR, CharArray,
     INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64,
     FLOAT, DOUBLE
 )
 from src.cstructpy import GenericStruct
+from src.cstructpy import exceptions
 
 
 class TestInt16Type:
@@ -37,9 +40,9 @@ class TestBooleanType:
         s = bool_struct(value=True)
         with pytest.raises(ValueError):
             s.value = 1
-        with pytest.raises(ValueError):
+        with pytest.raises(exceptions.ArraySizeError):
             s.value = "True"
-        with pytest.raises(ValueError):
+        with pytest.raises(exceptions.ArraySizeError):
             s.value = b'348234809234809782634867234'
 
     def test_pack_unpack(self, bool_struct):
@@ -169,11 +172,11 @@ class TestFloatingTypes:
         class FloatStruct(GenericStruct):
             value: type_class
 
-        with pytest.raises(ValueError):
+        with pytest.raises(exceptions.ArraySizeError):
             FloatStruct(value="3.14")
 
         s = FloatStruct(value=1.0)
-        with pytest.raises(ValueError):
+        with pytest.raises(exceptions.ArraySizeError):
             s.value = "invalid"
 
 
@@ -223,6 +226,51 @@ class TestErrorHandling:
             mixed_struct(bool_val=True).pack()  # Missing other required fields
 
 
+class TestArrayCreation:
+
+    def test_array_creation_for_primitives(self, arrays_struct_6):
+        arrays_struct_obj = arrays_struct_6(
+            bool_array_6=[True, False, False, True, False, False],
+            int16_array_6=[1234, 23341, 12, 1451, 234, 11],
+            float_array_6=[3.141592, 123.141592, -1233.141592, 13.141391, -1001.141592, 10000.141592],
+            uint16_array_6=[1234, 43341, 12, 1451, 234, 11],
+            uint32_array_6=[1234, 23341, 12, 1451, 234, 11],
+            uint64_array_6=[1234, 23341, 12, 23123123, 234, 1844674407370955]
+        )
+
+        packed = arrays_struct_obj.pack()
+        assert len(packed) == (1 + 2 + 4 + 2 + 4 + 8) * 6, "Checksum failed"
+
+        arrays_struct_6_unpacked = arrays_struct_6.unpack(packed)
+
+        assert list(arrays_struct_6_unpacked.bool_array_6) == arrays_struct_obj.bool_array_6
+        assert list(arrays_struct_6_unpacked.int16_array_6) == arrays_struct_obj.int16_array_6
+        assert list(arrays_struct_6_unpacked.uint16_array_6) == arrays_struct_obj.uint16_array_6
+        assert list(arrays_struct_6_unpacked.uint32_array_6) == arrays_struct_obj.uint32_array_6
+        assert list(arrays_struct_6_unpacked.uint64_array_6) == arrays_struct_obj.uint64_array_6
+
+        # Check for float precision
+        for u_val, val in zip(arrays_struct_6_unpacked.float_array_6, arrays_struct_obj.float_array_6):
+            assert val == pytest.approx(u_val, rel=10 ** -6)
+
+    def test_char_not_used_as_array(self):
+        with pytest.raises(exceptions.CharArrayError):
+            class BrokenCharArray(GenericStruct):
+                char_array: CHAR[6]
+
+    def test_array_length_fixed(self):
+        class FixedArrayInt(GenericStruct):
+            values: INT16[4]
+
+        with pytest.raises(exceptions.ArraySizeError):
+            FixedArrayInt(values=[1, 2, 3])
+        with pytest.raises(exceptions.ArraySizeError):
+            FixedArrayInt(values=[1, 2, 3, 3, 1])
+
+        array_obj = FixedArrayInt(values=[1, 2, 3, 3])
+        assert len(array_obj.values) == 4, "Array size isn't length expected of 4"
+
+
 class TestUtilities:
     def test_to_dict(self, mixed_struct):
         s = mixed_struct(
@@ -250,3 +298,65 @@ class TestUtilities:
         s = PaddedStruct(value=1, next_value=2)
         d = s.to_dict()
         assert d == {'value': 1, 'next_value': 2}
+
+    @pytest.mark.parametrize('value', [random.randint(int(-2 ** 15 + 1), int(2 ** 15 - 1)) for _ in range(10)])
+    def test_equality_between_generic_structs(self, value, int16_struct):
+        class LocalInt16Struct(GenericStruct):
+            value: INT16
+
+        int16_obj = int16_struct(value=value)
+        local_int16_obj = LocalInt16Struct(value=value)
+        assert int16_obj == local_int16_obj, "The objects should be equal"
+        assert local_int16_obj == int16_obj, "The objects should be equal"
+
+    def test_equality_for_complex_generic_struct(self, complex_struct):
+        class LocalComplexStruct(GenericStruct):
+            bool_val: BOOL
+            char_val: CHAR
+            int16_val: INT16
+            float_val: FLOAT
+            uint16_val: UINT16
+            uint32_val: UINT32
+            uint64_val: UINT64
+
+        complex_obj = complex_struct(
+            bool_val=True,
+            char_val='X',
+            int16_val=-1234,
+            float_val=3.14,
+            uint16_val=int(2 ** 16 - 1),
+            uint32_val=int(2 ** 32 - 1),
+            uint64_val=int(2 ** 64 - 1)
+        )
+
+        local_complex_struct = LocalComplexStruct(
+            bool_val=True,
+            char_val='X',
+            int16_val=-1234,
+            float_val=3.14,
+            uint16_val=int(2 ** 16 - 1),
+            uint32_val=int(2 ** 32 - 1),
+            uint64_val=int(2 ** 64 - 1)
+        )
+
+        assert local_complex_struct == complex_obj, "The objects should be equal"
+        assert complex_obj == local_complex_struct, "The objects should be equal"
+
+    def test_inequality_between_char_array_generic_structs(self, string_struct):
+        # Arrays in different memory locations, thus they shouldn't be equal
+        class LocalStringStruct(GenericStruct):
+            value: CharArray(5)
+
+        string_obj = string_struct(value='yes')
+        local_string_obj = LocalStringStruct(value='yes')
+
+        assert string_obj != local_string_obj, "This objects should be different "
+        assert local_string_obj != string_obj, "This objects should be different "
+
+    def test_inequality_between_generic_structs(self, int16_struct):
+        class LocalInt16Struct(GenericStruct):
+            value: INT16
+
+        int16_obj = int16_struct(value=12)
+        local_int16_obj = LocalInt16Struct(value=12345)
+        assert int16_obj != local_int16_obj, "The objects should not be equal"

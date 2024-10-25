@@ -80,7 +80,7 @@ class GenericStruct:
 
         for field_name in temp_instance._type_hints:
             type_instance = getattr(temp_instance, f'_{field_name}_type')
-            field_size = type_instance.size
+            field_size = type_instance._size
             field_data = data[offset:offset + field_size]
             kwargs[field_name] = type_instance.unpack(field_data)
             offset += field_size
@@ -98,3 +98,36 @@ class GenericStruct:
             field_name: getattr(self, field_name)
             for field_name in self._type_hints
         }
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, GenericStruct):
+            # Get dictionaries of attributes for both instances
+            self_attrs = {k: v for k, v in self.__dict__.items() if not k.startswith('__')}
+            other_attrs = {k: v for k, v in other.__dict__.items() if not k.startswith('__')}
+
+            # for self
+            for k, v in self_attrs.items():
+                if '_type' in k and k != '_type_hints':  # Update only to the class and ignore type_hints
+                    self_attrs[k] = v.__class__
+
+            # for other
+            for k, v in other_attrs.items():
+                if '_type' in k and k != '_type_hints':  # Update only to the class and ignore type_hints
+                    other_attrs[k] = v.__class__
+
+            # Compare user-defined attributes
+            return self_attrs == other_attrs
+        return False
+
+    def __repr__(self):
+        """
+        Provides a string representation of the instance with all user-defined attributes and their values.
+
+        Returns:
+            str: A string showing the class name and user-defined attribute names and values.
+        """
+        # Collect all attributes that don't start with an underscore
+        attributes = {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+        # Format the attributes for display
+        attr_str = ', '.join(f"{k}={v!r}" for k, v in attributes.items())
+        return f"{self.__class__.__name__}({attr_str})"

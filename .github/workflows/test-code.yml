@@ -1,8 +1,13 @@
-name: Test the code for linting, types and tests
+name: Test code
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches:
+      - main
+      - 'dev-*'
+      - 'dev_*'
+      - 'feature-*'
+      - 'feature_*'
   pull_request:
     branches: [ "main" ]
 

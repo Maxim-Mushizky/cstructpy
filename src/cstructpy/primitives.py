@@ -1,6 +1,8 @@
 import struct
-from typing import Any, Optional
+from typing import Any, Optional, Sequence, Self
 from abc import ABC
+
+from .exceptions import ArraySizeError, CharArrayError
 
 
 # Base primitive type class (same as before)
@@ -10,13 +12,13 @@ class PrimitiveType(ABC):
     and unpacking binary data.
 
     Attributes:
-        format_char (str): The format character used by the `struct` module for packing/unpacking.
-        min_value (int, optional): The minimum allowable value for the type.
-        max_value (int, optional): The maximum allowable value for the type.
-        size (int): The size of the type in bytes.
+        _format_char (str): The format character used by the `struct` module for packing/unpacking.
+        _min_value (int, optional): The minimum allowable value for the type.
+        _max_value (int, optional): The maximum allowable value for the type.
+        _size (int): The size of the type in bytes.
     """
 
-    def __init__(self, format_char: str,
+    def __init__(self, format_char: str = '',
                  min_value: Optional[int] = None,
                  max_value: Optional[int] = None,
                  size: int = 0
@@ -30,10 +32,48 @@ class PrimitiveType(ABC):
             max_value (int, optional): Maximum value allowed (for integer types).
             size (int, optional): Size of the type in bytes.
         """
-        self.format_char = format_char
-        self.min_value = min_value
-        self.max_value = max_value
-        self.size = size
+        self._format_char = format_char
+        self._min_value = min_value
+        self._max_value = max_value
+        self._size = size
+
+    @property
+    def format_char(self):
+        return self._format_char
+
+    @property
+    def min_value(self):
+        return self._min_value
+
+    @property
+    def max_value(self):
+        return self._max_value
+
+    @property
+    def size(self):
+        return self._size
+
+    def __class_getitem__(cls, array_size: int) -> Self:
+        """
+        Intercepts the [] operator, returning a new class that represents an array of this type.
+
+        Args:
+            array_size (int): The size of the array.
+
+        Returns:
+            PrimitiveType: The instantiated class with augmented format_char and size to represent array
+        """
+        if array_size == 0:
+            raise ArraySizeError('error: size of array is zero')
+
+        if array_size < 0:
+            raise ArraySizeError('error: size of array is negative')
+
+        _cls_instance = cls()
+        _cls_instance._size *= array_size
+        _cls_instance._format_char = f'{array_size}{_cls_instance._format_char}'
+
+        return _cls_instance
 
     def validate(self, value: Any) -> bool:
         """
@@ -48,18 +88,32 @@ class PrimitiveType(ABC):
         Returns:
             bool: True if the value is valid.
         """
-        if self.min_value is not None and value < self.min_value:
-            raise ValueError(f"Value {value} is less than minimum {self.min_value}")
-        if self.max_value is not None and value > self.max_value:
-            raise ValueError(f"Value {value} is greater than maximum {self.max_value}")
+        if isinstance(value, Sequence):
+            if len(self._format_char) <= 1:
+                raise ArraySizeError(f"Array of length {len(value)} provided but expected a single value")
+            if (expected_val := int(self.format_char[:-1])) != len(value):
+                raise ArraySizeError(f"Expected array size of {expected_val}. Got {len(value)} instead")
+            return all([self._validate_for_single_value(v) for v in value])
+        return self._validate_for_single_value(value)
+
+    def _validate_for_single_value(self, value: Any) -> bool:
+        if self._min_value is not None and value < self._min_value:
+            raise ValueError(f"Value {value} is less than minimum {self._min_value}")
+        if self._max_value is not None and value > self._max_value:
+            raise ValueError(f"Value {value} is greater than maximum {self._max_value}")
         return True
 
     def pack(self, value: Any) -> bytes:
         self.validate(value)
-        return struct.pack(self.format_char, value)
+        if isinstance(value, Sequence):
+            return struct.pack(self._format_char, *value)
+        return struct.pack(self._format_char, value)
 
     def unpack(self, data: bytes) -> Any:
-        return struct.unpack(self.format_char, data)[0]
+        unpacked_object = struct.unpack(self._format_char, data)
+        if len(unpacked_object) == 1:
+            return unpacked_object[0]
+        return unpacked_object
 
 
 # Integer types
@@ -103,13 +157,24 @@ class UINT64(PrimitiveType):
         super().__init__('Q', min_value=0, max_value=18446744073709551615, size=8)
 
 
+# ====== Special dtypes ======
+
 # Floating point types
 class FLOAT(PrimitiveType):
     def __init__(self):
         super().__init__('f', size=4)
 
     def validate(self, value: Any) -> bool:
-        if not isinstance(value, (int, float)):
+        # For sequence
+        if isinstance(value, Sequence):
+            if len(self._format_char) <= 1:
+                raise ArraySizeError(f"Array of length {len(value)} provided but expected a single value")
+            for i, v in enumerate(value):
+                if not isinstance(v, (int, float)):
+                    raise ValueError(f"FLOAT at index {i} isn't DOUBLE, but {type(v)} instead")
+
+        # For single case
+        elif not isinstance(value, (int, float)):
             raise ValueError("FLOAT value must be a number")
         return True
 
@@ -119,7 +184,16 @@ class DOUBLE(PrimitiveType):
         super().__init__('d', size=8)
 
     def validate(self, value: Any) -> bool:
-        if not isinstance(value, (int, float)):
+        # For sequence
+        if isinstance(value, Sequence):
+            if len(self._format_char) <= 1:
+                raise ArraySizeError(f"Array of length {len(value)} provided but expected a single value")
+            for i, v in enumerate(value):
+                if not isinstance(v, (int, float)):
+                    raise ArraySizeError(f"Value at index {i} isn't DOUBLE, but {type(v)} instead")
+
+        # For single case
+        elif not isinstance(value, (int, float)):
             raise ValueError("DOUBLE value must be a number")
         return True
 
@@ -128,6 +202,9 @@ class DOUBLE(PrimitiveType):
 class CHAR(PrimitiveType):
     def __init__(self):
         super().__init__('c', size=1)
+
+    def __class_getitem__(cls, item):
+        raise CharArrayError()
 
     def validate(self, value: Any) -> bool:
         if not isinstance(value, (str, bytes)) or len(str(value)) != 1:
@@ -176,7 +253,16 @@ class BOOL(PrimitiveType):
         super().__init__('?', size=1)
 
     def validate(self, value: Any) -> bool:
-        if not isinstance(value, bool):
+        # For sequence
+        if isinstance(value, Sequence):
+            if len(self._format_char) <= 1:
+                raise ArraySizeError(f"Array of length {len(value)} provided but expected a single value")
+
+            for i, v in enumerate(value):
+                if not isinstance(v, bool):
+                    raise ValueError(f"Value at index {i} isn't BOOL, but {type(v)} instead")
+        # For single case
+        elif not isinstance(value, bool):
             raise ValueError("BOOL value must be True or False")
         return True
 
@@ -190,7 +276,7 @@ class PADDING(PrimitiveType):
         return True
 
     def pack(self, value: Any = None) -> bytes:
-        return b'\x00' * self.size
+        return b'\x00' * self._size
 
     def unpack(self, data: bytes) -> None:
         return None
