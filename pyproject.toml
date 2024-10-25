@@ -8,6 +8,9 @@
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project.urls]
+Documentation = "https://github.com/Maxim-Mushizky/cstructpy/wiki"
+
 [tool.mypy]
 files = "src/"
 
