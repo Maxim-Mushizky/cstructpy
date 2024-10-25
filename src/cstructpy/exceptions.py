@@ -12,5 +12,5 @@ class ArraySizeError(Exception):
 
 class CharArrayError(Exception):
     def __init__(self, message: Optional[str] = None):
-        default_message = 'CHAR cannot be used as an array like this. Use primitives.CharArray object instead'
+        default_message = 'CHAR cannot be used as an array like this. Use primitives.CharArray class instead'
         super().__init__(message or default_message)

@@ -40,9 +40,9 @@ class TestBooleanType:
         s = bool_struct(value=True)
         with pytest.raises(ValueError):
             s.value = 1
-        with pytest.raises(ValueError):
+        with pytest.raises(exceptions.ArraySizeError):
             s.value = "True"
-        with pytest.raises(ValueError):
+        with pytest.raises(exceptions.ArraySizeError):
             s.value = b'348234809234809782634867234'
 
     def test_pack_unpack(self, bool_struct):
@@ -172,11 +172,11 @@ class TestFloatingTypes:
         class FloatStruct(GenericStruct):
             value: type_class
 
-        with pytest.raises(ValueError):
+        with pytest.raises(exceptions.ArraySizeError):
             FloatStruct(value="3.14")
 
         s = FloatStruct(value=1.0)
-        with pytest.raises(ValueError):
+        with pytest.raises(exceptions.ArraySizeError):
             s.value = "invalid"
 
 

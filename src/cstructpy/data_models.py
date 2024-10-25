@@ -118,3 +118,16 @@ class GenericStruct:
             # Compare user-defined attributes
             return self_attrs == other_attrs
         return False
+
+    def __repr__(self):
+        """
+        Provides a string representation of the instance with all user-defined attributes and their values.
+
+        Returns:
+            str: A string showing the class name and user-defined attribute names and values.
+        """
+        # Collect all attributes that don't start with an underscore
+        attributes = {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+        # Format the attributes for display
+        attr_str = ', '.join(f"{k}={v!r}" for k, v in attributes.items())
+        return f"{self.__class__.__name__}({attr_str})"

@@ -4,7 +4,8 @@
 [![PyPI version](https://badge.fury.io/py/cstructpy.svg)](https://badge.fury.io/py/cstructpy)
 [![Python versions](https://img.shields.io/pypi/pyversions/cstructpy)](https://pypi.org/project/cstructpy/)
 
-**cstructpy** is a Python package designed for binary serialization and deserialization of structured data using custom
+**cstructpy** is a light-weight Python package designed for binary serialization and deserialization of structured data
+using c like
 primitive types. It provides a simple interface for packing and unpacking binary data based on field definitions using
 Python's `struct` module.
 The motivation for this package is to have a data validation using type annotations, similar to pydantic but for binary
@@ -16,10 +17,10 @@ similar class structure and object creation
 - Custom primitive types for integers, floating points, characters, and arrays.
 - Dynamically create structured classes with flexible field definitions.
 - Provides an interface for primitive type annotations
+- Supports validation for all the primitive types
+- Supports Array creation for all primitive types (apart for CHAR type) and validation of size
 - Serialize/deserialize data to/from binary formats easily.
-- Supports both signed and unsigned integer types (e.g., `INT8`, `U_INT8`, `INT16`, etc.).
 - Support for alignment padding and fixed-length character arrays.
-- Supports Array creation for all primitive types (apart for CHAR type)
 
 ## Installation
 
@@ -47,7 +48,7 @@ class MyDataStructure(GenericStruct):
     field1: INT8
     field2: UINT16
     field3: FLOAT
-    array_uint64: UINT64[3]  # an array of UINT64 and size 3 
+    array_uint64: UINT64[3]  # an array of UINT64 of size 3 
 
 
 # Create an instance with field values

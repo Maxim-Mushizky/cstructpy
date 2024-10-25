@@ -89,6 +89,8 @@ class PrimitiveType(ABC):
             bool: True if the value is valid.
         """
         if isinstance(value, Sequence):
+            if len(self._format_char) <= 1:
+                raise ArraySizeError(f"Array of length {len(value)} provided but expected a single value")
             if (expected_val := int(self.format_char[:-1])) != len(value):
                 raise ArraySizeError(f"Expected array size of {expected_val}. Got {len(value)} instead")
             return all([self._validate_for_single_value(v) for v in value])
@@ -155,6 +157,8 @@ class UINT64(PrimitiveType):
         super().__init__('Q', min_value=0, max_value=18446744073709551615, size=8)
 
 
+# ====== Special dtypes ======
+
 # Floating point types
 class FLOAT(PrimitiveType):
     def __init__(self):
@@ -163,6 +167,8 @@ class FLOAT(PrimitiveType):
     def validate(self, value: Any) -> bool:
         # For sequence
         if isinstance(value, Sequence):
+            if len(self._format_char) <= 1:
+                raise ArraySizeError(f"Array of length {len(value)} provided but expected a single value")
             for i, v in enumerate(value):
                 if not isinstance(v, (int, float)):
                     raise ValueError(f"FLOAT at index {i} isn't DOUBLE, but {type(v)} instead")
@@ -180,9 +186,11 @@ class DOUBLE(PrimitiveType):
     def validate(self, value: Any) -> bool:
         # For sequence
         if isinstance(value, Sequence):
+            if len(self._format_char) <= 1:
+                raise ArraySizeError(f"Array of length {len(value)} provided but expected a single value")
             for i, v in enumerate(value):
                 if not isinstance(v, (int, float)):
-                    raise ValueError(f"Value at index {i} isn't DOUBLE, but {type(v)} instead")
+                    raise ArraySizeError(f"Value at index {i} isn't DOUBLE, but {type(v)} instead")
 
         # For single case
         elif not isinstance(value, (int, float)):
@@ -247,6 +255,9 @@ class BOOL(PrimitiveType):
     def validate(self, value: Any) -> bool:
         # For sequence
         if isinstance(value, Sequence):
+            if len(self._format_char) <= 1:
+                raise ArraySizeError(f"Array of length {len(value)} provided but expected a single value")
+
             for i, v in enumerate(value):
                 if not isinstance(v, bool):
                     raise ValueError(f"Value at index {i} isn't BOOL, but {type(v)} instead")
