@@ -3,6 +3,8 @@
 ![Testing workflow](https://github.com/Maxim-Mushizky/cstructpy/actions/workflows/test-code.yml/badge.svg)
 ![PyPI version](https://badge.fury.io/py/cstructpy.svg)
 ![Python versions](https://img.shields.io/pypi/pyversions/cstructpy)
+![PyPI version](https://badge.fury.io/py/cstructpy.svg)](https://badge.fury.io/py/cstructpy)
+[![Python versions](https://img.shields.io/pypi/pyversions/cstructpy)](https://pypi.org/project/cstructpy/)
 
 **cstructpy** is a light-weight Python package designed for binary serialization and deserialization of structured data
 using c like

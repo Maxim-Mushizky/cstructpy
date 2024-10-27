@@ -1,5 +1,5 @@
 import struct
-from typing import Any, Optional, Sequence, Self
+from typing import Any, Optional, Sequence, Self, Type
 from abc import ABC
 
 from .exceptions import ArraySizeError, CharArrayError
@@ -21,7 +21,8 @@ class PrimitiveType(ABC):
     def __init__(self, format_char: str = '',
                  min_value: Optional[int] = None,
                  max_value: Optional[int] = None,
-                 size: int = 0
+                 size: int = 0,
+                 python_dtypes: Optional[Type | tuple[Type, ...]] = None
                  ) -> None:
         """
         Initializes a PrimitiveType with the given format character, optional min/max values, and size.
@@ -36,6 +37,7 @@ class PrimitiveType(ABC):
         self._min_value = min_value
         self._max_value = max_value
         self._size = size
+        self._python_dtype = python_dtypes
 
     @property
     def format_char(self):
@@ -97,6 +99,9 @@ class PrimitiveType(ABC):
         return self._validate_for_single_value(value)
 
     def _validate_for_single_value(self, value: Any) -> bool:
+
+        if self._python_dtype and not isinstance(value, self._python_dtype):
+            raise TypeError(f"The value {value} isn't of type {self._python_dtype}")
         if self._min_value is not None and value < self._min_value:
             raise ValueError(f"Value {value} is less than minimum {self._min_value}")
         if self._max_value is not None and value > self._max_value:
@@ -119,42 +124,42 @@ class PrimitiveType(ABC):
 # Integer types
 class INT8(PrimitiveType):
     def __init__(self):
-        super().__init__('b', min_value=-128, max_value=127, size=1)
+        super().__init__('b', min_value=-128, max_value=127, size=1, python_dtypes=int)
 
 
 class UINT8(PrimitiveType):
     def __init__(self):
-        super().__init__('B', min_value=0, max_value=255, size=1)
+        super().__init__('B', min_value=0, max_value=255, size=1, python_dtypes=int)
 
 
 class INT16(PrimitiveType):
     def __init__(self):
-        super().__init__('h', min_value=-32768, max_value=32767, size=2)
+        super().__init__('h', min_value=-32768, max_value=32767, size=2, python_dtypes=int)
 
 
 class UINT16(PrimitiveType):
     def __init__(self):
-        super().__init__('H', min_value=0, max_value=65535, size=2)
+        super().__init__('H', min_value=0, max_value=65535, size=2, python_dtypes=int)
 
 
 class INT32(PrimitiveType):
     def __init__(self):
-        super().__init__('i', min_value=-2147483648, max_value=2147483647, size=4)
+        super().__init__('i', min_value=-2147483648, max_value=2147483647, size=4, python_dtypes=int)
 
 
 class UINT32(PrimitiveType):
     def __init__(self):
-        super().__init__('I', min_value=0, max_value=4294967295, size=4)
+        super().__init__('I', min_value=0, max_value=4294967295, size=4, python_dtypes=int)
 
 
 class INT64(PrimitiveType):
     def __init__(self):
-        super().__init__('q', min_value=-9223372036854775808, max_value=9223372036854775807, size=8)
+        super().__init__('q', min_value=-9223372036854775808, max_value=9223372036854775807, size=8, python_dtypes=int)
 
 
 class UINT64(PrimitiveType):
     def __init__(self):
-        super().__init__('Q', min_value=0, max_value=18446744073709551615, size=8)
+        super().__init__('Q', min_value=0, max_value=18446744073709551615, size=8, python_dtypes=int)
 
 
 # ====== Special dtypes ======
@@ -162,46 +167,18 @@ class UINT64(PrimitiveType):
 # Floating point types
 class FLOAT(PrimitiveType):
     def __init__(self):
-        super().__init__('f', size=4)
-
-    def validate(self, value: Any) -> bool:
-        # For sequence
-        if isinstance(value, Sequence):
-            if len(self._format_char) <= 1:
-                raise ArraySizeError(f"Array of length {len(value)} provided but expected a single value")
-            for i, v in enumerate(value):
-                if not isinstance(v, (int, float)):
-                    raise ValueError(f"FLOAT at index {i} isn't DOUBLE, but {type(v)} instead")
-
-        # For single case
-        elif not isinstance(value, (int, float)):
-            raise ValueError("FLOAT value must be a number")
-        return True
+        super().__init__('f', size=4, python_dtypes=(int, float))
 
 
 class DOUBLE(PrimitiveType):
     def __init__(self):
-        super().__init__('d', size=8)
-
-    def validate(self, value: Any) -> bool:
-        # For sequence
-        if isinstance(value, Sequence):
-            if len(self._format_char) <= 1:
-                raise ArraySizeError(f"Array of length {len(value)} provided but expected a single value")
-            for i, v in enumerate(value):
-                if not isinstance(v, (int, float)):
-                    raise ArraySizeError(f"Value at index {i} isn't DOUBLE, but {type(v)} instead")
-
-        # For single case
-        elif not isinstance(value, (int, float)):
-            raise ValueError("DOUBLE value must be a number")
-        return True
+        super().__init__('d', size=8, python_dtypes=(int, float))
 
 
 # Character types
 class CHAR(PrimitiveType):
     def __init__(self):
-        super().__init__('c', size=1)
+        super().__init__('c', size=1, python_dtypes=(str, bytes))
 
     def __class_getitem__(cls, item):
         raise CharArrayError()
@@ -223,7 +200,7 @@ class CHAR(PrimitiveType):
 
 class CharArray(PrimitiveType):
     def __init__(self, length: int):
-        super().__init__(f'{length}s', size=length)
+        super().__init__(f'{length}s', size=length, python_dtypes=(str, bytes))
         self.length = length
 
     def validate(self, value: Any) -> bool:
@@ -250,7 +227,7 @@ class CharArray(PrimitiveType):
 # Boolean type
 class BOOL(PrimitiveType):
     def __init__(self):
-        super().__init__('?', size=1)
+        super().__init__('?', size=1, python_dtypes=bool)
 
     def validate(self, value: Any) -> bool:
         # For sequence
