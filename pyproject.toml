@@ -1,8 +1,20 @@
-#[project]
-#name = "cstructpy"
-#version = "0.1.0"
-#description = "cstructpy is a Python package designed for binary serialization and deserialization of structured data using custom primitive types."
-#authors = ["Maxim Mushizky maximmu87@gmail.com"]
+[project]
+name = "cstructpy"
+version = "0.2.1"
+description = "cstructpy is a Python package designed for binary serialization and deserialization of structured data using custom primitive types."
+requires-python = ">=3.10"
+readme = { file = "README.md", content-type = "text/markdown" }
+
+
+# Add any missing fields for better compliance
+authors = [{ name = "Maxim Mushizky" }]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+
+]
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]
