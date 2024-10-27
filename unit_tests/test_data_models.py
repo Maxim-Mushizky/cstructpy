@@ -271,6 +271,56 @@ class TestArrayCreation:
         assert len(array_obj.values) == 4, "Array size isn't length expected of 4"
 
 
+class TestClassDefaults:
+
+    def test_default_creation(self):
+        class MixedStruct(GenericStruct):
+            bool_val: BOOL = True
+            uint32_array: UINT32[4] = [1, 2, 3, 4]
+            int32: INT32 = 324
+
+        try:
+            mixed_struct_obj = MixedStruct()
+        except Exception as e:
+            raise AssertionError(f"Object from mixed struct causes and exception, when it shouldn't. {e}")
+
+        assert mixed_struct_obj.bool_val is True
+        assert mixed_struct_obj.uint32_array == [1, 2, 3, 4]
+        assert mixed_struct_obj.int32 == 324
+
+        packed = mixed_struct_obj.pack()
+        unpacked = mixed_struct_obj.unpack(packed)
+
+        assert mixed_struct_obj.bool_val == unpacked.bool_val
+        assert mixed_struct_obj.uint32_array == list(unpacked.uint32_array)
+        assert mixed_struct_obj.int32 == unpacked.int32
+
+    def test_defaults_raise_exceptions(self):
+
+        with pytest.raises(ValueError):
+            class MixedStruct(GenericStruct):
+                bool_val: BOOL = 1
+                uint32_array: UINT32[4] = [1, 2, 3, 4]
+                int32: INT32 = 324
+
+            MixedStruct()
+        with pytest.raises(exceptions.ArraySizeError):
+            class MixedStruct(GenericStruct):
+                bool_val: BOOL = True
+                uint32_array: UINT32[4] = [1, 2, 3]
+                int32: INT32 = 324
+
+            MixedStruct()
+
+        with pytest.raises(ValueError):
+            class MixedStruct(GenericStruct):
+                bool_val: BOOL = True
+                uint32_array: UINT32[4] = [1, 2, 3, 4]
+                int16: INT16 = 2 ** 15
+
+            MixedStruct()
+
+
 class TestUtilities:
     def test_to_dict(self, mixed_struct):
         s = mixed_struct(

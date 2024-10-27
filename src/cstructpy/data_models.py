@@ -13,22 +13,24 @@ class GenericStruct:
 
     def __init__(self, **kwargs):
         """
-        Initializes the GenericStruct instance and sets default types for all fields based on type hints.
-        Accepts keyword arguments for field values.
-
-        Args:
-            **kwargs: Keyword arguments corresponding to the fields and their values.
-
-        Raises:
-            ValueError: If a field name does not exist in the class type hints.
+        Initializes the GenericStruct instance, setting up fields based on type hints.
+        Only enforces defaults if explicitly provided in subclasses.
         """
         self._type_hints = get_type_hints(self.__class__)
 
+        # Identify and set fields with explicit defaults in the subclass
         for field_name, field_type in self._type_hints.items():
+            # Define the field type for packing/unpacking
             if isinstance(field_type, type) and issubclass(field_type, PrimitiveType):
                 setattr(self, f'_{field_name}_type', field_type())
             else:
                 setattr(self, f'_{field_name}_type', field_type)
+
+            # Check if the field has a default; enforce if set in the subclass or passed in kwargs
+            if field_name in kwargs:
+                setattr(self, field_name, kwargs[field_name])
+            elif hasattr(self.__class__, field_name):  # Enforce default if defined in subclass
+                setattr(self, field_name, getattr(self.__class__, field_name))
 
         for key, value in kwargs.items():
             if key not in self._type_hints:
@@ -36,16 +38,15 @@ class GenericStruct:
             setattr(self, key, value)
 
     def __setattr__(self, name: str, value: Any):
+        # Bypass type enforcement for private attributes
         if name.startswith('_'):
             super().__setattr__(name, value)
             return
 
-        if name not in getattr(self, '_type_hints', {}):
-            super().__setattr__(name, value)
-            return
-
-        type_instance = getattr(self, f'_{name}_type')
-        type_instance.validate(value)
+        # Validate type only for fields with defaults or explicitly passed fields
+        if name in getattr(self, '_type_hints', {}):
+            type_instance = getattr(self, f'_{name}_type')
+            type_instance.validate(value)
         super().__setattr__(name, value)
 
     def pack(self) -> bytes:
@@ -80,7 +81,7 @@ class GenericStruct:
 
         for field_name in temp_instance._type_hints:
             type_instance = getattr(temp_instance, f'_{field_name}_type')
-            field_size = type_instance._size
+            field_size = type_instance.size
             field_data = data[offset:offset + field_size]
             kwargs[field_name] = type_instance.unpack(field_data)
             offset += field_size
