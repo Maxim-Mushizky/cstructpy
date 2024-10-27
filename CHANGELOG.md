@@ -7,11 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1]
 
-### Added
-
 ### Fixed
 
-- Fixed validation to be a more robust and scalable method for most of the primitives
+- Fixed compatability issue with python 3.10
 
 ## [0.2.0]
 

@@ -1,6 +1,7 @@
 import struct
 from typing import Any, Optional, Sequence, Self, Type
 from typing import Any, Optional, Sequence, Self
+from typing import Any, Optional, Sequence
 from abc import ABC
 
 from .exceptions import ArraySizeError, CharArrayError
@@ -99,7 +100,7 @@ class PrimitiveType(ABC):
     def size(self):
         return self._size
 
-    def __class_getitem__(cls, array_size: int) -> Self:
+    def __class_getitem__(cls, array_size: int):
         """
         Intercepts the [] operator, returning a new class that represents an array of this type.
 
