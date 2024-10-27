@@ -1,5 +1,6 @@
 import struct
 from typing import Any, Optional, Sequence, Self, Type
+from typing import Any, Optional, Sequence, Self
 from abc import ABC
 
 from .exceptions import ArraySizeError, CharArrayError
@@ -33,6 +34,49 @@ class PrimitiveType(ABC):
             max_value (int, optional): Maximum value allowed (for integer types).
             size (int, optional): Size of the type in bytes.
         """
+        self._format_char = format_char
+        self._min_value = min_value
+        self._max_value = max_value
+        self._size = size
+        self._python_dtype = python_dtypes
+
+    @property
+    def format_char(self):
+        return self._format_char
+
+    @property
+    def min_value(self):
+        return self._min_value
+
+    @property
+    def max_value(self):
+        return self._max_value
+
+    @property
+    def size(self):
+        return self._size
+
+    def __class_getitem__(cls, array_size: int) -> Self:
+        """
+        Intercepts the [] operator, returning a new class that represents an array of this type.
+
+        Args:
+            array_size (int): The size of the array.
+
+        Returns:
+            PrimitiveType: The instantiated class with augmented format_char and size to represent array
+        """
+        if array_size == 0:
+            raise ArraySizeError('error: size of array is zero')
+
+        if array_size < 0:
+            raise ArraySizeError('error: size of array is negative')
+
+        _cls_instance = cls()
+        _cls_instance._size *= array_size
+        _cls_instance._format_char = f'{array_size}{_cls_instance._format_char}'
+
+        return _cls_instance
         self._format_char = format_char
         self._min_value = min_value
         self._max_value = max_value
