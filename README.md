@@ -67,6 +67,29 @@ print(new_instance.to_dict())
 
 ```
 
+### Using defaults
+
+You can now use defaults for all types, including collections
+
+```python
+from cstructpy import GenericStruct
+from cstructpy.primitives import INT8, UINT16, FLOAT, UINT64
+
+
+class MyDataStructure(GenericStruct):
+    field1: INT8 = 16  # Setting default
+    field2: UINT16 = 256  # Setting default 
+    field3: FLOAT = 3.0  # Setting default
+    array_uint64: UINT64[3]  # Not setting
+
+
+data_instance = MyDataStructure(array_uint64=[312, 2345, 234212])  # Valid call
+
+
+
+
+```
+
 ## Primitive Types
 
 The package provides the following primitive types for defining fields:

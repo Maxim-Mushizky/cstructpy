@@ -14,27 +14,30 @@ jobs:
         with:
           python-version: 3.11
       - name: Install pypa/build
-        run: >-
-          python -m
-          pip install
-          build
-          --user
+        run: |
+          python -m pip install build --user
       - name: Build a binary wheel and a source tarball
-        run: >-
-          python -m
-          build
-          --sdist
-          --wheel
-          --outdir dist/
-          .
+        run: |
+          python -m build --sdist --wheel --outdir dist/ .
+
+      # Step to check if the cstructpy wheel works correctly
+      - name: Sanity test for cstructpy installation and import
+        run: |
+          python -m venv test_env
+          . test_env/bin/activate
+          python -m pip install dist/*.whl
+          python -c "from cstructpy import GenericStruct"
+        shell: bash
+        continue-on-error: false  # Stop if there's an error in this step
+
       - name: Publish distribution 📦 to Test PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
           password: ${{ secrets.TEST_PYPI_API_TOKEN2 }}
           repository_url: https://test.pypi.org/legacy/
           skip_existing: true
+
       - name: Publish distribution 📦 to PyPI
-        # if: startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN2 }}
