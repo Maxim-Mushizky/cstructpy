@@ -419,8 +419,8 @@ class TestUtilities:
         string_obj = string_struct(value='yes')
         local_string_obj = LocalStringStruct(value='yes')
 
-        assert string_obj != local_string_obj, "This objects should be different "
-        assert local_string_obj != string_obj, "This objects should be different "
+        assert string_obj == local_string_obj, "The objects should be equal"
+        assert local_string_obj == string_obj, "The objects should be equal"
 
     def test_inequality_between_generic_structs(self, int16_struct):
         class LocalInt16Struct(GenericStruct):
@@ -429,3 +429,32 @@ class TestUtilities:
         int16_obj = int16_struct(value=12)
         local_int16_obj = LocalInt16Struct(value=12345)
         assert int16_obj != local_int16_obj, "The objects should not be equal"
+
+
+class TestNestedObjectCreation:
+
+    def test_nested_object_creation(self):
+        class ZeroStruct(GenericStruct):
+            fid: UINT64
+
+        class FirstStruct(GenericStruct):
+            id: UINT64
+            zero_struct: ZeroStruct
+
+        class SecondStruct(GenericStruct):
+            sid: UINT64
+            first_struct: FirstStruct
+
+        created_object = SecondStruct(sid=123,
+                                      first_struct=FirstStruct(id=1234,
+                                                               zero_struct=ZeroStruct(fid=555)))
+        assert created_object.sid == 123
+        assert created_object.first_struct.id == 1234
+        assert created_object.first_struct.zero_struct.fid == 555
+
+        packed = created_object.pack()
+        unpacked = created_object.unpack(packed)
+
+        assert unpacked.sid == created_object.sid
+        assert unpacked.first_struct.id == created_object.first_struct.id
+        assert unpacked.first_struct.zero_struct.fid == created_object.first_struct.zero_struct.fid

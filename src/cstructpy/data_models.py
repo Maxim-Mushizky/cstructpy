@@ -20,8 +20,11 @@ class GenericStruct:
 
         # Identify and set fields with explicit defaults in the subclass
         for field_name, field_type in self._type_hints.items():
-            # Define the field type for packing/unpacking
-            if isinstance(field_type, type) and issubclass(field_type, PrimitiveType):
+            # Check if field_type is a subclass of GenericStruct
+            if isinstance(field_type, type) and issubclass(field_type, GenericStruct):
+                setattr(self, f'_{field_name}_type', field_type)
+            # Check if it's a primitive type
+            elif isinstance(field_type, type) and issubclass(field_type, PrimitiveType):
                 setattr(self, f'_{field_name}_type', field_type())
             else:
                 setattr(self, f'_{field_name}_type', field_type)
@@ -37,6 +40,25 @@ class GenericStruct:
                 raise ValueError(f"Unknown field: {key}")
             setattr(self, key, value)
 
+    def get_field_size(self, field_type) -> int:
+        """
+        Calculate the size of a field, whether it's a primitive type or a nested struct.
+
+        Args:
+            field_type: The type of the field (either PrimitiveType instance or GenericStruct class)
+
+        Returns:
+            int: The size in bytes of the field
+        """
+        if isinstance(field_type, type) and issubclass(field_type, GenericStruct):
+            # For nested structs, create a temporary instance and calculate total size
+            temp_instance = field_type()
+            return sum(self.get_field_size(getattr(temp_instance, f'_{name}_type'))
+                       for name in temp_instance._type_hints)
+        else:
+            # For primitive types, return their size directly
+            return field_type.size
+
     def __setattr__(self, name: str, value: Any):
         # Bypass type enforcement for private attributes
         if name.startswith('_'):
@@ -46,7 +68,14 @@ class GenericStruct:
         # Validate type only for fields with defaults or explicitly passed fields
         if name in getattr(self, '_type_hints', {}):
             type_instance = getattr(self, f'_{name}_type')
-            type_instance.validate(value)
+
+            # Handle nested GenericStruct
+            if isinstance(type_instance, type) and issubclass(type_instance, GenericStruct):
+                if not isinstance(value, type_instance):
+                    raise TypeError(f"Expected {type_instance.__name__}, got {type(value).__name__}")
+            else:
+                type_instance.validate(value)
+
         super().__setattr__(name, value)
 
     def pack(self) -> bytes:
@@ -55,12 +84,18 @@ class GenericStruct:
 
         Returns:
             bytes: The packed binary data for the structure.
-       """
+        """
         result = b''
         for field_name in self._type_hints:
             value = getattr(self, field_name)
             type_instance = getattr(self, f'_{field_name}_type')
-            result += type_instance.pack(value)
+
+            # Handle nested GenericStruct
+            if isinstance(type_instance, type) and issubclass(type_instance, GenericStruct):
+                result += value.pack()
+            else:
+                result += type_instance.pack(value)
+
         return result
 
     @classmethod
@@ -81,9 +116,17 @@ class GenericStruct:
 
         for field_name in temp_instance._type_hints:
             type_instance = getattr(temp_instance, f'_{field_name}_type')
-            field_size = type_instance.size
-            field_data = data[offset:offset + field_size]
-            kwargs[field_name] = type_instance.unpack(field_data)
+
+            # Handle nested GenericStruct
+            if isinstance(type_instance, type) and issubclass(type_instance, GenericStruct):
+                field_size = temp_instance.get_field_size(type_instance)
+                field_data = data[offset:offset + field_size]
+                kwargs[field_name] = type_instance.unpack(field_data)
+            else:
+                field_size = type_instance.size
+                field_data = data[offset:offset + field_size]
+                kwargs[field_name] = type_instance.unpack(field_data)
+
             offset += field_size
 
         return cls(**kwargs)
@@ -91,33 +134,23 @@ class GenericStruct:
     def to_dict(self) -> Dict[str, Any]:
         """
         Converts the structure to a dictionary with field names as keys and their values.
+        Handles nested structures recursively.
 
         Returns:
             dict: A dictionary representation of the structure.
         """
-        return {
-            field_name: getattr(self, field_name)
-            for field_name in self._type_hints
-        }
+        result = {}
+        for field_name in self._type_hints:
+            value = getattr(self, field_name)
+            if isinstance(value, GenericStruct):
+                result[field_name] = value.to_dict()
+            else:
+                result[field_name] = value
+        return result
 
     def __eq__(self, other) -> bool:
         if isinstance(other, GenericStruct):
-            # Get dictionaries of attributes for both instances
-            self_attrs = {k: v for k, v in self.__dict__.items() if not k.startswith('__')}
-            other_attrs = {k: v for k, v in other.__dict__.items() if not k.startswith('__')}
-
-            # for self
-            for k, v in self_attrs.items():
-                if '_type' in k and k != '_type_hints':  # Update only to the class and ignore type_hints
-                    self_attrs[k] = v.__class__
-
-            # for other
-            for k, v in other_attrs.items():
-                if '_type' in k and k != '_type_hints':  # Update only to the class and ignore type_hints
-                    other_attrs[k] = v.__class__
-
-            # Compare user-defined attributes
-            return self_attrs == other_attrs
+            return self.to_dict() == other.to_dict()
         return False
 
     def __repr__(self):
