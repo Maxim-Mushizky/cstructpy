@@ -21,7 +21,7 @@ jobs:
           python -m build --sdist --wheel --outdir dist/ .
 
       # Step to check if the cstructpy wheel works correctly
-      - name: Test cstructpy installation and import
+      - name: Sanity test for cstructpy installation and import
         run: |
           python -m venv test_env
           . test_env/bin/activate

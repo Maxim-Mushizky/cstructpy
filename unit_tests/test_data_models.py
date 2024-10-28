@@ -320,6 +320,25 @@ class TestClassDefaults:
 
             MixedStruct()
 
+    def test_variables_change_from_defaults(self):
+        class MixedStruct(GenericStruct):
+            bool_val: BOOL = True
+            uint32_array: UINT32[4] = [1, 2, 3, 4]
+            int32: INT32 = 324
+
+        mixed_struct_obj = MixedStruct(bool_val=False)
+        mixed_struct_obj.uint32_array = [12, 12, 12, 12]
+
+        assert mixed_struct_obj.bool_val is False
+        assert mixed_struct_obj.uint32_array == [12, 12, 12, 12]
+
+        packed = mixed_struct_obj.pack()
+        unpacked = mixed_struct_obj.unpack(packed)
+
+        assert mixed_struct_obj.bool_val == unpacked.bool_val
+        assert mixed_struct_obj.uint32_array == list(unpacked.uint32_array)
+        assert mixed_struct_obj.int32 == unpacked.int32
+
 
 class TestUtilities:
     def test_to_dict(self, mixed_struct):

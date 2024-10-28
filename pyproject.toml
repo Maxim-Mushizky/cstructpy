@@ -6,7 +6,6 @@ requires-python = ">=3.10"
 readme = { file = "README.md", content-type = "text/markdown" }
 
 
-# Add any missing fields for better compliance
 authors = [{ name = "Maxim Mushizky" }]
 
 classifiers = [
